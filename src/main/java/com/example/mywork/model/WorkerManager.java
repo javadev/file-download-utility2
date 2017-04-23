@@ -34,6 +34,7 @@ public class WorkerManager {
     final private Queue<String> queue;
     final private Map<String, List<String>> filesToDownload;
     final private FileTransferCallback fileCallback;
+    final private AllFilesTransferCallback allFilesCallback;
 
     /**
      * Constructor.
@@ -41,13 +42,15 @@ public class WorkerManager {
      * @param queue work queue
      * @param filesToDownload files for processing
      */
-    public WorkerManager(CLParser config, Queue<String> queue, Map<String, List<String>> filesToDownload, FileTransferCallback fileCallback) {
+    public WorkerManager(CLParser config, Queue<String> queue, Map<String, List<String>> filesToDownload,
+        FileTransferCallback fileCallback, AllFilesTransferCallback allFilesCallback) {
         this.bandwidthLimit = (Integer) config.get("limit");
         this.threadsNum 	= (int) 	config.get("threads");
         this.outputFolder 	= (File) 	config.get("output");
         this.queue 			= queue;
         this.filesToDownload= filesToDownload;
         this.fileCallback = fileCallback;
+        this.allFilesCallback = allFilesCallback;
 
         sync = new CountDownLatch( threadsNum );
         byteCounter = new Semaphore( bandwidthLimit );
@@ -57,7 +60,7 @@ public class WorkerManager {
      * Runs processing.
      * @return processing time in milliseconds
      */
-    public long run() {
+    public void run() {
 
         // Daemon thread for time count
         Thread timerThread = new Thread(new Runnable() {
@@ -186,7 +189,8 @@ public class WorkerManager {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        return System.currentTimeMillis() - begins;
+        long time = System.currentTimeMillis() - begins;
+        allFilesCallback.print(100, filesToDownload.size(), getBytes(), time, 1000 * getBytes() / time);
     }
 
     /**

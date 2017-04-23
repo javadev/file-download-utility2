@@ -3,6 +3,7 @@ package com.example.mywork;
 import com.example.mywork.model.CLArgumentException;
 import com.example.mywork.model.CLParam;
 import com.example.mywork.model.CLParser;
+import com.example.mywork.model.AllFilesTransferCallback;
 import com.example.mywork.model.FileTransferCallback;
 import com.example.mywork.model.WorkerManager;
 
@@ -59,12 +60,17 @@ public class Main {
 
         FileTransferCallback fileCallback = new FileTransferCallback() {
             public void print(String fileName) {
-                System.out.printf(Locale.ENGLISH, "Загружается файл %s\n", fileName);
+                System.out.printf("Загружается файл %s\n", fileName);
             }
         };
-        WorkerManager wm = new WorkerManager(config, queue, filesToDownload, fileCallback);
-        long time = wm.run();
-        System.out.printf(Locale.ENGLISH, "Transfered %1$d bytes in %2$s %3$d B/s\n", wm.getBytes(), getTimeString(time), 1000 * wm.getBytes() / time);
+        AllFilesTransferCallback allFilesCallback = new AllFilesTransferCallback() {
+            public void print(int percent, long numFiles, long bytes, long time, long speed) {
+                System.out.printf("Завершено: %d%%\nЗагружено: %d файлов, %d байт\nВремя: %s\nСредняя скорость: %d байт в секунду",
+                    percent, numFiles, bytes, getTimeString(time), speed);
+            }
+        };
+        WorkerManager wm = new WorkerManager(config, queue, filesToDownload, fileCallback, allFilesCallback);
+        wm.run();
     }
 
     /**
