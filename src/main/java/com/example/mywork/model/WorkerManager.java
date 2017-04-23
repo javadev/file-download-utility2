@@ -33,6 +33,7 @@ public class WorkerManager {
     final private File		 outputFolder;
     final private Queue<String> queue;
     final private Map<String, List<String>> filesToDownload;
+    final private FileTransferCallback fileCallback;
 
     /**
      * Constructor.
@@ -40,12 +41,13 @@ public class WorkerManager {
      * @param queue work queue
      * @param filesToDownload files for processing
      */
-    public WorkerManager(CLParser config, Queue<String> queue, Map<String, List<String>> filesToDownload) {
+    public WorkerManager(CLParser config, Queue<String> queue, Map<String, List<String>> filesToDownload, FileTransferCallback fileCallback) {
         this.bandwidthLimit = (Integer) config.get("limit");
         this.threadsNum 	= (int) 	config.get("threads");
         this.outputFolder 	= (File) 	config.get("output");
         this.queue 			= queue;
         this.filesToDownload= filesToDownload;
+        this.fileCallback = fileCallback;
 
         sync = new CountDownLatch( threadsNum );
         byteCounter = new Semaphore( bandwidthLimit );
@@ -102,6 +104,7 @@ public class WorkerManager {
                             break;
                         }
 
+                        fileCallback.print(fileName);
                         HttpURLConnection connection;
                         try {
                             connection = (HttpURLConnection)new URL(urlStr).openConnection();
@@ -193,5 +196,4 @@ public class WorkerManager {
     public long getBytes() {
         return transferedBytes.get();
     }
-
 }
